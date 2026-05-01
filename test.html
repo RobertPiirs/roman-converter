@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Suite — Roman Numeral Converter</title>
+    <link rel="stylesheet" href="https://unpkg.com/mocha@10/mocha.css">
+    <style>
+        body { font-family: 'Courier New', monospace; background: #1a1a2e; color: #e0e0e0; }
+        #mocha { background: #16213e; border-radius: 8px; margin: 20px; padding: 20px; }
+        #mocha h1 a { color: #e94560; }
+        #mocha h2 { color: #aaa; }
+        #mocha .suite .suite h1 { color: #ccc; }
+        #mocha-stats { color: #888; }
+        .back { display: block; text-align: center; padding: 12px; color: #555;
+                font-size: 0.8rem; font-family: 'Courier New', monospace; }
+        .back a { color: #e94560; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div id="mocha"></div>
+    <p class="back"><a href="index.html">← back to converter</a></p>
+
+    <script src="https://unpkg.com/chai@4/chai.js"></script>
+    <script src="https://unpkg.com/mocha@10/mocha.js"></script>
+    <script>mocha.setup({ ui: 'bdd', timeout: 10000 })</script>
+    <script src="converter.js"></script>
+
+    <script>
+    const expect = chai.expect;
+
+    // ─── Equivalence Partitioning ────────────────────────────────────────────────
+
+    describe('Equivalence Partitioning', () => {
+
+        describe('EP1 — Valid integers [1, 3999]', () => {
+            it('converts 1 to I',    () => expect(convertToRoman(1)).to.equal('I'));
+            it('converts 10 to X',   () => expect(convertToRoman(10)).to.equal('X'));
+            it('converts 50 to L',   () => expect(convertToRoman(50)).to.equal('L'));
+            it('converts 100 to C',  () => expect(convertToRoman(100)).to.equal('C'));
+            it('converts 500 to D',  () => expect(convertToRoman(500)).to.equal('D'));
+            it('converts 1000 to M', () => expect(convertToRoman(1000)).to.equal('M'));
+        });
+
+        describe('EP2 — Below lower bound (n < 1)', () => {
+            it('throws for 0',  () => expect(() => convertToRoman(0)).to.throw(RangeError));
+            it('throws for -1', () => expect(() => convertToRoman(-1)).to.throw(RangeError));
+            it('throws for -100', () => expect(() => convertToRoman(-100)).to.throw(RangeError));
+        });
+
+        describe('EP3 — Above upper bound (n > 3999)', () => {
+            it('throws for 4000', () => expect(() => convertToRoman(4000)).to.throw(RangeError));
+            it('throws for 5000', () => expect(() => convertToRoman(5000)).to.throw(RangeError));
+            it('throws for 99999', () => expect(() => convertToRoman(99999)).to.throw(RangeError));
+        });
+
+        describe('EP4 — Non-integer numbers', () => {
+            it('throws for 1.5',  () => expect(() => convertToRoman(1.5)).to.throw(TypeError));
+            it('throws for 3.14', () => expect(() => convertToRoman(3.14)).to.throw(TypeError));
+            it('throws for NaN',  () => expect(() => convertToRoman(NaN)).to.throw(TypeError));
+        });
+
+        describe('EP5 — Non-numeric input', () => {
+            it('throws for a string', () => expect(() => convertToRoman('XIV')).to.throw(TypeError));
+            it('throws for null',     () => expect(() => convertToRoman(null)).to.throw(TypeError));
+            it('throws for undefined',() => expect(() => convertToRoman(undefined)).to.throw(TypeError));
+            it('throws for an array', () => expect(() => convertToRoman([5])).to.throw(TypeError));
+        });
+    });
+
+    // ─── Boundary Value Analysis ─────────────────────────────────────────────────
+
+    describe('Boundary Value Analysis', () => {
+
+        describe('Lower boundary', () => {
+            it('throws at 0 (just below lower bound)',    () => expect(() => convertToRoman(0)).to.throw(RangeError));
+            it('converts 1 (lower bound)',                () => expect(convertToRoman(1)).to.equal('I'));
+            it('converts 2 (just above lower bound)',     () => expect(convertToRoman(2)).to.equal('II'));
+        });
+
+        describe('Upper boundary', () => {
+            it('converts 3998 (just below upper bound)',  () => expect(convertToRoman(3998)).to.equal('MMMCMXCVIII'));
+            it('converts 3999 (upper bound)',             () => expect(convertToRoman(3999)).to.equal('MMMCMXCIX'));
+            it('throws at 4000 (just above upper bound)', () => expect(() => convertToRoman(4000)).to.throw(RangeError));
+        });
+    });
+
+    // ─── Subtractive Notation ────────────────────────────────────────────────────
+
+    describe('Subtractive notation (canonical pairs)', () => {
+        it('4    → IV  (not IIII)', () => expect(convertToRoman(4)).to.equal('IV'));
+        it('9    → IX  (not VIIII)',() => expect(convertToRoman(9)).to.equal('IX'));
+        it('40   → XL  (not XXXX)', () => expect(convertToRoman(40)).to.equal('XL'));
+        it('90   → XC  (not LXXXX)',() => expect(convertToRoman(90)).to.equal('XC'));
+        it('400  → CD  (not CCCC)', () => expect(convertToRoman(400)).to.equal('CD'));
+        it('900  → CM  (not DCCCC)',() => expect(convertToRoman(900)).to.equal('CM'));
+    });
+
+    // ─── Canonical Form ──────────────────────────────────────────────────────────
+
+    describe('Canonical form — no invalid sequences in any output', () => {
+        it('never produces four consecutive I (IIII)', () => {
+            for (let n = 1; n <= 3999; n++) {
+                expect(convertToRoman(n)).to.not.match(/IIII/);
+            }
+        });
+
+        it('never produces VV', () => {
+            for (let n = 1; n <= 3999; n++) {
+                expect(convertToRoman(n)).to.not.match(/VV/);
+            }
+        });
+
+        it('never produces four consecutive X (XXXX)', () => {
+            for (let n = 1; n <= 3999; n++) {
+                expect(convertToRoman(n)).to.not.match(/XXXX/);
+            }
+        });
+
+        it('never produces LL', () => {
+            for (let n = 1; n <= 3999; n++) {
+                expect(convertToRoman(n)).to.not.match(/LL/);
+            }
+        });
+
+        it('never produces four consecutive C (CCCC)', () => {
+            for (let n = 1; n <= 3999; n++) {
+                expect(convertToRoman(n)).to.not.match(/CCCC/);
+            }
+        });
+
+        it('never produces DD', () => {
+            for (let n = 1; n <= 3999; n++) {
+                expect(convertToRoman(n)).to.not.match(/DD/);
+            }
+        });
+    });
+
+    // ─── Representative Complex Values ───────────────────────────────────────────
+
+    describe('Complex values (domain partitioning)', () => {
+        it('3    → III',           () => expect(convertToRoman(3)).to.equal('III'));
+        it('14   → XIV',           () => expect(convertToRoman(14)).to.equal('XIV'));
+        it('42   → XLII',          () => expect(convertToRoman(42)).to.equal('XLII'));
+        it('399  → CCCXCIX',       () => expect(convertToRoman(399)).to.equal('CCCXCIX'));
+        it('1066 → MLXVI',         () => expect(convertToRoman(1066)).to.equal('MLXVI'));
+        it('1776 → MDCCLXXVI',     () => expect(convertToRoman(1776)).to.equal('MDCCLXXVI'));
+        it('1994 → MCMXCIV',       () => expect(convertToRoman(1994)).to.equal('MCMXCIV'));
+        it('2024 → MMXXIV',        () => expect(convertToRoman(2024)).to.equal('MMXXIV'));
+        it('3549 → MMMDXLIX',      () => expect(convertToRoman(3549)).to.equal('MMMDXLIX'));
+    });
+
+    </script>
+    <script>mocha.run()</script>
+</body>
+</html>
