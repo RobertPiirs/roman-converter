@@ -26,12 +26,20 @@
   <p id="output"></p>
 
   <script src="converter.js"></script>
+
   <script>
-    function convert() {
-      const num = document.getElementById("input").value;
-      const result = convertToRoman(Number(num));
-      document.getElementById("output").innerText = result;
-    }
-  </script>
+  function convert() {
+    const num = document.getElementById("input").value;
+
+    // 👉 Google Analytics event (THIS is the convert click)
+    gtag('event', 'convert_click', {
+      event_category: 'interaction',
+      event_label: 'Convert Button Clicked'
+    });
+
+    const result = convertToRoman(Number(num));
+    document.getElementById("output").innerText = result;
+  }
+</script>
 </body>
 </html>
